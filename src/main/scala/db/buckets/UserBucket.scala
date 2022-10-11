@@ -15,7 +15,7 @@ class UserBucket(cluster: AsyncCluster)
   private val defaultCollection: AsyncCollection = bucket.defaultCollection
 
 
-  override def getById(id: Long): Future[Option[User]] = {
+  override def getById(id: UUID): Future[Option[User]] = {
     defaultCollection.get(id.toString)
       .map(asObject)
   }
@@ -29,7 +29,7 @@ class UserBucket(cluster: AsyncCluster)
 
   override def save(data:User): Future[User] = {
 
-    Future.successful(User(UUID.randomUUID(), "", "", "", BigDecimal.valueOf(1), List()))
+//    Future.successful(User(UUID.randomUUID(), "", "", "", BigDecimal.valueOf(1), List()))
   }
 
   override def query(): AsyncBucket = {
