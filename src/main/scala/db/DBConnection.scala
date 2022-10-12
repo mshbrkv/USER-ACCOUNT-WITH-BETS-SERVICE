@@ -2,8 +2,7 @@ package db
 
 import akka.actor.ActorSystem
 import com.couchbase.client.scala.env.{ClusterEnvironment, TimeoutConfig}
-import com.couchbase.client.scala.manager.collection.CollectionManager
-import com.couchbase.client.scala.{Bucket, Cluster, ClusterOptions}
+import com.couchbase.client.scala.{Cluster, ClusterOptions}
 
 import scala.concurrent.duration.DurationInt
 
@@ -31,7 +30,5 @@ object DBConnection {
     .get
 
 
-
-
-  cluster.bucket("").defaultCollection
+  cluster.bucket("User").defaultCollection
 }

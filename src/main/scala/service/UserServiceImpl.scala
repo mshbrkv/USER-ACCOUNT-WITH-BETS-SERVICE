@@ -1,14 +1,15 @@
 package service
 
+import db.buckets.UserBucket
 import entity.User
 
-import java.util.UUID
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class UserServiceImpl extends UserService {
+class UserServiceImpl(val bucket: UserBucket)(implicit ex: ExecutionContext) extends UserService {
 
-  override def getUserById(id: UUID): Future[Option[User]] = null
+  override def getUserById(id: String): Future[Option[User]] = bucket.getById(id)
 
-  override def createUser(user: User): Future[User] = null
+  override def createUser(user: User): Future[User] = bucket.save(user)
 
+  override def deleteUser(id: String): Future[Unit] = bucket.deleteById(id)
 }
