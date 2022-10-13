@@ -6,33 +6,60 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.syntax.EncoderOps
-import service.UserService
+import service.bet.BetService
+import service.user.UserService
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-class UserRoute(userService: UserService)
+class UserRoute(userService: UserService, betService: BetService)
                (implicit ex: ExecutionContext) extends FailFastCirceSupport {
 
   val routes: Route = pathPrefix("user") {
-    path("id" / Segment) { id => {
-      onComplete(userService.getUserById(id)) {
-        case Success(value) => {
-          value match {
-            case Some(value) => complete(StatusCodes.OK -> value.asJson)
-            case None => complete(StatusCodes.InternalServerError -> "Missing")
+    path("betId" / Segment) {
+      betId => {
+        get {
+          onComplete(betService.getBetById(betId)) {
+            case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
+            case Success(value) => {
+              value match {
+                case Some(value) => complete(StatusCodes.OK -> value.asJson)
+                case None => complete(StatusCodes.InternalServerError -> "Missing bet")
+              }
+            }
           }
         }
-        case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
       }
-    } ~
-      delete {
-        complete(userService.deleteUser(id))
+    } ~ pathPrefix("id" / Segment) { id => {
+      get {
+        onComplete(userService.getUserById(id)) {
+          case Success(value) => {
+            value match {
+              case Some(value) => complete(StatusCodes.OK -> value.asJson)
+              case None => complete(StatusCodes.InternalServerError -> "Missing user")
+            }
+          }
+          case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
+        }
       }
+      //      path("allBetsByUser") {
+      //        betId => {
+      //          get {
+      //            onComplete(betService.getBetByUserId(id)) {
+      //              case Success(value) => value
+      //              case Failure(exception)
+      //              => complete(StatusCodes.InternalServerError -> exception)
+      //            }
+      //          }
+      //        }
+      //      }
+    } ~ delete {
+      complete(userService.deleteUser(id))
     }
-  } ~
-    path("new") {
-      entity(as[User]) { user => {
+    }
+  } ~ path("new") {
+    entity(as[User]) {
+      user => {
         post {
           onComplete(userService.createUser(user)) {
             case Success(value) => complete(StatusCodes.OK -> value)
@@ -40,6 +67,6 @@ class UserRoute(userService: UserService)
           }
         }
       }
-      }
     }
+  }
 }

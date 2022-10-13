@@ -2,8 +2,10 @@ import akka.http.scaladsl.Http
 import controller.UserRoute
 import db.DBConnection
 import db.DBConnection.actor
-import db.buckets.UserBucket
-import service.UserServiceImpl
+import db.buckets.bets.BetBucket
+import db.buckets.user.UserBucket
+import service.bet.BetServiceImpl
+import service.user.UserServiceImpl
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
@@ -12,12 +14,15 @@ object UserAccountWithBetsServiceApp extends App {
   val cluster = DBConnection.cluster
 
 
+
   implicit val ec: ExecutionContextExecutor = ExecutionContext.global
 
-  val bucket = new UserBucket(cluster.async)
-  val userService = new UserServiceImpl(bucket)
+  val bucketUser = new UserBucket(cluster.async)
+  val bucketBet = new BetBucket(cluster.async)
+  val userService = new UserServiceImpl(bucketUser)
+  val betService=new BetServiceImpl(bucketBet)
   val routes = {
-    new UserRoute(userService).routes
+    new UserRoute(userService, betService).routes
   }
 
 

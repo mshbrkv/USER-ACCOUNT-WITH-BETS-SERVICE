@@ -1,4 +1,4 @@
-package service
+package service.user
 
 import entity.User
 

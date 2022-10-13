@@ -1,8 +1,8 @@
-package db.buckets
-
+package db.buckets.user
 
 import com.couchbase.client.scala.kv.GetResult
 import com.couchbase.client.scala.{AsyncBucket, AsyncCluster, AsyncCollection}
+import db.buckets.AbstractBucket
 import entity.User
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -20,7 +20,7 @@ class UserBucket(cluster: AsyncCluster)
       .map(asObject)
   }
 
-  private def asObject(doc: GetResult): Option[User] = {
+  override def asObject(doc: GetResult): Option[User] = {
     doc.contentAs[io.circe.Json] match {
       case Success(value) => value.as[User]
       case Failure(exception) => throw exception

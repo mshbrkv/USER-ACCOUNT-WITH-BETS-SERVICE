@@ -30,5 +30,5 @@ object DBConnection {
     .get
 
 
-  cluster.bucket("User").defaultCollection
+  //  cluster.bucket("User").defaultCollection
 }

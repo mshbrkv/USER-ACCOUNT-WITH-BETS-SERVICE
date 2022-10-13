@@ -1,6 +1,6 @@
-package service
+package service.user
 
-import db.buckets.UserBucket
+import db.buckets.user.UserBucket
 import entity.User
 
 import scala.concurrent.{ExecutionContext, Future}
