@@ -14,17 +14,15 @@ object UserAccountWithBetsServiceApp extends App {
   val cluster = DBConnection.cluster
 
 
-
   implicit val ec: ExecutionContextExecutor = ExecutionContext.global
 
   val bucketUser = new UserBucket(cluster.async)
   val bucketBet = new BetBucket(cluster.async)
   val userService = new UserServiceImpl(bucketUser)
-  val betService=new BetServiceImpl(bucketBet)
+  val betService = new BetServiceImpl(bucketBet)
   val routes = {
     new UserRoute(userService, betService).routes
   }
-
 
   Http().newServerAt("0.0.0.0", 8080).bindFlow(routes)
 

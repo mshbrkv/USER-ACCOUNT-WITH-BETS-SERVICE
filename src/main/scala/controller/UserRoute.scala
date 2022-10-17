@@ -21,38 +21,44 @@ class UserRoute(userService: UserService, betService: BetService)
         get {
           onComplete(betService.getBetById(betId)) {
             case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
-            case Success(value) => {
+            case Success(value) =>
               value match {
                 case Some(value) => complete(StatusCodes.OK -> value.asJson)
                 case None => complete(StatusCodes.InternalServerError -> "Missing bet")
               }
-            }
           }
         }
       }
     } ~ pathPrefix("id" / Segment) { id => {
-      get {
-        onComplete(userService.getUserById(id)) {
-          case Success(value) => {
-            value match {
-              case Some(value) => complete(StatusCodes.OK -> value.asJson)
-              case None => complete(StatusCodes.InternalServerError -> "Missing user")
-            }
-          }
-          case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
-        }
-      }
-      //      path("allBetsByUser") {
-      //        betId => {
-      //          get {
-      //            onComplete(betService.getBetByUserId(id)) {
-      //              case Success(value) => value
-      //              case Failure(exception)
-      //              => complete(StatusCodes.InternalServerError -> exception)
+      //      get {
+      //        onComplete(userService.getUserById(id)) {
+      //          case Success(value) => {
+      //            value match {
+      //              case Some(value) => complete(StatusCodes.OK -> value.asJson)
+      //              case None => complete(StatusCodes.InternalServerError -> "Missing user")
       //            }
+      //          }
+      //          case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
+      //        }
+      //      } ~
+      //      path("userBets") {
+      //        get {
+      //          onComplete(betService.getBetByUserId(id)) {
+      //            case Success(value) => complete(StatusCodes.OK -> value.map(_.asJson))
+      //            case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
       //          }
       //        }
       //      }
+      path("byEventId" / Segment) {
+        eventId => {
+          get {
+            onComplete(betService.getBetByEventIdOneUser(eventId, id)) {
+              case Success(value) => complete(StatusCodes.OK -> value.map(_.asJson))
+              case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
+            }
+          }
+        }
+      }
     } ~ delete {
       complete(userService.deleteUser(id))
     }
