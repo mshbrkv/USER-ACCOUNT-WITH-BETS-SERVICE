@@ -20,7 +20,9 @@ ThisBuild / libraryDependencies ++= {
     "de.heikoseeberger" %% "akka-http-circe" % akkaHttpCirceV,
     "com.typesafe.akka" %% "akka-testkit" % akkaV,
     "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % "test",
-    "com.couchbase.client" % "scala-client" % "1.2.4"
+    "com.couchbase.client" % "scala-client" % "1.2.4",
+    "com.lihaoyi" %% "requests" % "0.7.1"
+
   ).map(_.cross(CrossVersion.for3Use2_13))
 }
 

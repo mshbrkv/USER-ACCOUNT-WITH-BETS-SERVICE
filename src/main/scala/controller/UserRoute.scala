@@ -9,6 +9,7 @@ import io.circe.syntax.EncoderOps
 import service.bet.BetService
 import service.user.UserService
 
+import java.util.UUID
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
@@ -52,7 +53,7 @@ class UserRoute(userService: UserService, betService: BetService)
       path("byEventId" / Segment) {
         eventId => {
           get {
-            onComplete(betService.getBetByEventIdOneUser(eventId, id)) {
+            onComplete(betService.getBetByEventIdOneUser(UUID.fromString(eventId), id)) {
               case Success(value) => complete(StatusCodes.OK -> value.map(_.asJson))
               case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
             }
@@ -62,6 +63,13 @@ class UserRoute(userService: UserService, betService: BetService)
     } ~ delete {
       complete(userService.deleteUser(id))
     }
+    } ~ path("active_bets") {
+      get {
+        onComplete(betService.getActiveBetsByEvent) {
+          case Success(value) => complete(StatusCodes.OK -> value)
+          case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
+        }
+      }
     }
   } ~ path("new") {
     entity(as[User]) {
