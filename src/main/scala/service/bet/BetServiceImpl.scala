@@ -14,4 +14,5 @@ class BetServiceImpl(val bucket: BetBucket)(implicit ex: ExecutionContext) exten
 
   override def getBetByEventIdOneUser(userId: String, eventId: String): Future[Seq[Bet]] = bucket.getBetByEventIdOneUser(userId, eventId)
 
+  override def getActiveBets(): Future[Seq[Bet]] = bucket.getActiveBets
 }

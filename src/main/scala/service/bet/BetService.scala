@@ -1,9 +1,7 @@
 package service.bet
 
-import entity.{Bet, Event}
-import ujson.Value
+import entity.Bet
 
-import java.util.UUID
 import scala.concurrent.Future
 
 trait BetService {
@@ -12,7 +10,9 @@ trait BetService {
 
   def getBetByUserId(id: String): Future[Seq[Bet]]
 
-  def getBetByEventIdOneUser(userId: String,eventId: String): Future[Seq[Bet]]
+  def getBetByEventIdOneUser(userId: String, eventId: String): Future[Seq[Bet]]
+
+  def getActiveBets: Future[Seq[Bet]]
 
 
 }

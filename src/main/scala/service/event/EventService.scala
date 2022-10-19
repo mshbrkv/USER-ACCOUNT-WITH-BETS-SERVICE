@@ -8,4 +8,5 @@ trait EventService {
 
   def getActiveBetsByEvent: Future[Seq[Event]]
 
+
 }

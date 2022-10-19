@@ -4,12 +4,13 @@ import com.couchbase.client.scala.kv.GetResult
 import com.couchbase.client.scala.{AsyncCluster, AsyncCollection}
 import db.buckets.AbstractBucket
 import entity.Bet
+import service.event.EventService
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 
-class BetBucket(cluster: AsyncCluster)(implicit ex: ExecutionContext) extends AbstractBucket[Bet] {
+class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: ExecutionContext) extends AbstractBucket[Bet] {
 
   final val bucket = cluster.bucket("Bets")
   final val defaultCollection: AsyncCollection = bucket.defaultCollection
@@ -61,5 +62,18 @@ class BetBucket(cluster: AsyncCluster)(implicit ex: ExecutionContext) extends Ab
 
     cluster.query(query)
       .map(_.rowsAs(Bet.codec).getOrElse(Seq()).toSeq)
+  }
+
+  def getActiveBets: Future[Seq[Bet]] = {
+    for {
+      activeEvents <- eventService.getActiveBetsByEvent
+      idActiveEvents = activeEvents.map(_.id.toString).mkString("'", "','", "'")
+      query =
+        s"""
+           |SELECT b.*
+           |FROM `Bets` b
+           |WHERE b.eventId IN [$idActiveEvents]""".stripMargin
+      result <- cluster.query(query).map(_.rowsAs(Bet.codec).getOrElse(Seq()).toSeq)
+    } yield result
   }
 }

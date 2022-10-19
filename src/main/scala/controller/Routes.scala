@@ -70,31 +70,43 @@ class Routes(userService: UserService, betService: BetService, eventService: Eve
             }
           }
         }
-      } ~
-      path("active_bets") { //work
+      }
+  }
+  private val eventsRoutes = pathPrefix("events") {
+    path("activeEvents") { //work
+      get {
+        onComplete(eventService.getActiveBetsByEvent) {
+          case Success(value) => complete(StatusCodes.OK -> value)
+          case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
+        }
+      }
+    }
+  }
+  private val betRoutes: Route = pathPrefix("bets") {
+    path("betId" / Segment) {
+      betId => {
+        get { //work
+          onComplete(betService.getBetById(betId)) {
+            case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
+            case Success(value) =>
+              value match {
+                case Some(value) => complete(StatusCodes.OK -> value.asJson)
+                case None => complete(StatusCodes.InternalServerError -> "Missing bet")
+              }
+          }
+        }
+      }
+    } ~
+      path("activeBets") { //work
         get {
-          onComplete(eventService.getActiveBetsByEvent) {
+          onComplete(betService.getActiveBets) {
             case Success(value) => complete(StatusCodes.OK -> value)
             case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
           }
         }
       }
   }
-  private val betRoutes: Route = path("betId" / Segment) {
-    betId => {
-      get { //work
-        onComplete(betService.getBetById(betId)) {
-          case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
-          case Success(value) =>
-            value match {
-              case Some(value) => complete(StatusCodes.OK -> value.asJson)
-              case None => complete(StatusCodes.InternalServerError -> "Missing bet")
-            }
-        }
-      }
-    }
-  }
 
-  val routes: Route = routesWithUserId ~ betRoutes
-  
+  val routes: Route = routesWithUserId ~ betRoutes ~ eventsRoutes
+
 }

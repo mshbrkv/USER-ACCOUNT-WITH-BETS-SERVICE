@@ -17,10 +17,11 @@ object UserAccountWithBetsServiceApp extends App {
   implicit val ec: ExecutionContextExecutor = ExecutionContext.global
 
   val bucketUser = new UserBucket(cluster.async)
-  val bucketBet = new BetBucket(cluster.async)
+   val eventService = new EventServiceImpl()
+  val bucketBet = new BetBucket(cluster.async,eventService)
   val userService = new UserServiceImpl(bucketUser)
   val betService = new BetServiceImpl(bucketBet)
-  val eventService = new EventServiceImpl()
+
 
   val routes = {
     new Routes(userService, betService, eventService).routes

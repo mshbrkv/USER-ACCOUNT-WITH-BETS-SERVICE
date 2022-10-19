@@ -8,14 +8,10 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class EventServiceImpl(implicit ex: ExecutionContext) extends EventService {
 
-  override def getActiveBetsByEvent: Future[Seq[Event]] = {
+  private val headers = Seq(("Content-Type" -> "application/json"), ("charset" -> "utf-8"))
 
-
-    val headers = Seq(("Content-Type" -> "application/json"), ("charset" -> "utf-8"))
-
-    val response: Response = requests.get("http://localhost:8082/events/in_play=true", readTimeout = 600000, connectTimeout = 6000000, headers = headers)
-
-    val activeEventIds: Seq[Event] = (for {
+  private def gggg(response: Response): Seq[Event] = {
+    (for {
       responseAsString <- parse(response.text()).toOption
       responseCursor = responseAsString.hcursor
       contentCursor = responseCursor.downField("content")
@@ -24,7 +20,28 @@ class EventServiceImpl(implicit ex: ExecutionContext) extends EventService {
     } yield event)
       .getOrElse(Seq())
       .toSeq.flatMap(_.toOption)
+  }
+  override def getActiveBetsByEvent: Future[Seq[Event]] = {
 
-    Future(activeEventIds)
+    val lastPage = getLastPage
+    val seqOfPages=Seq.range(0,lastPage,1)
+
+    val response = seqOfPages.map(page =>  requests.get(s"http://localhost:8082/events/in_play=true?page=$page", readTimeout = 600000, connectTimeout = 6000000, headers = headers))
+
+       Future(response.flatMap(it => gggg(it)))
+  }
+
+
+  private def getLastPage: Int = {
+
+    val response: Response = requests.get("http://localhost:8082/events/in_play=true", readTimeout = 600000, connectTimeout = 6000000, headers = headers)
+    val lastPage: Option[Int] = {
+      for {
+        responseAsString <- parse(response.text()).toOption
+        responseCursor = responseAsString.hcursor
+        totalPages = responseCursor.downField("totalPages").as[Int].getOrElse(0)
+      } yield totalPages
+    }
+    lastPage.get
   }
 }
