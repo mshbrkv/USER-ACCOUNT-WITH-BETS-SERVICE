@@ -5,7 +5,6 @@ import com.couchbase.client.scala.{AsyncCluster, AsyncCollection}
 import db.buckets.AbstractBucket
 import entity.Bet
 
-import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
@@ -43,7 +42,7 @@ class BetBucket(cluster: AsyncCluster)(implicit ex: ExecutionContext) extends Ab
 
     val query =
       s"""
-         |SELECT *
+         |SELECT b.*
          |FROM `Bets` b
          |WHERE b.userId='$id'""".stripMargin
 
@@ -53,12 +52,12 @@ class BetBucket(cluster: AsyncCluster)(implicit ex: ExecutionContext) extends Ab
   }
 
 
-  def getBetByEventIdOneUser(id: UUID, userId: String): Future[Seq[Bet]] = {
+  def getBetByEventIdOneUser(userId: String, eventId: String): Future[Seq[Bet]] = {
     val query =
       s"""
-         |SELECT *
+         |SELECT b.*
          |FROM `Bets` b
-         |WHERE b.eventId='$id' AND b.userId='$userId'""".stripMargin
+         |WHERE b.userId='$userId' AND b.eventId='$eventId'""".stripMargin
 
     cluster.query(query)
       .map(_.rowsAs(Bet.codec).getOrElse(Seq()).toSeq)
