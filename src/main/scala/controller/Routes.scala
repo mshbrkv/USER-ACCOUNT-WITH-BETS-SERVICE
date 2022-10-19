@@ -1,6 +1,6 @@
 package controller
 
-import _root_.entity.User
+import _root_.entity.{Bet, User}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -56,6 +56,18 @@ class Routes(userService: UserService, betService: BetService, eventService: Eve
             case Success(value) => complete(StatusCodes.OK -> "done")
             case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
           }
+        }~
+        path("newBet") {
+          entity(as[Bet]) {
+            bet => {
+              post {
+                onComplete(betService.createBet(bet, id)) {
+                  case Success(value) => complete(StatusCodes.OK -> value)
+                  case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
+                }
+              }
+            }
+          }
         }
     }
     } ~
@@ -75,7 +87,7 @@ class Routes(userService: UserService, betService: BetService, eventService: Eve
   private val eventsRoutes = pathPrefix("events") {
     path("activeEvents") { //work
       get {
-        onComplete(eventService.getActiveBetsByEvent) {
+        onComplete(eventService.getActiveEventsFromAllPages) {
           case Success(value) => complete(StatusCodes.OK -> value)
           case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
         }
@@ -106,7 +118,5 @@ class Routes(userService: UserService, betService: BetService, eventService: Eve
         }
       }
   }
-
   val routes: Route = routesWithUserId ~ betRoutes ~ eventsRoutes
-
 }

@@ -31,7 +31,7 @@ class UserBucket(cluster: AsyncCluster)
     s"U:${id}"
   }
 
-  override def save(data: User): Future[User] = {
+  def save(data: User): Future[User] = {
     defaultCollection.insert(entityToId(data), data)(User.codec).map(_ => data)
   }
 

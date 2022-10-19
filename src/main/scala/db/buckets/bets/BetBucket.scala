@@ -27,11 +27,6 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
     }
   }.toOption
 
-  override def save(data: Bet): Future[Bet] = defaultCollection.insert(entityToId(data), data)(Bet.codec).map(_ => data)
-
-  override def entityToId(data: Bet): String = {
-    s"B:${data.id}"
-  }
 
   override def deleteById(id: String): Future[Unit] = defaultCollection.remove(convertIdToDocId(id)).map(_ => ())
 
@@ -52,7 +47,6 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
       .map(_.rowsAs(Bet.codec).getOrElse(Seq()).toSeq)
   }
 
-
   def getBetByEventIdOneUser(userId: String, eventId: String): Future[Seq[Bet]] = {
     val query =
       s"""
@@ -66,7 +60,7 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
 
   def getActiveBets: Future[Seq[Bet]] = {
     for {
-      activeEvents <- eventService.getActiveBetsByEvent
+      activeEvents <- eventService.getActiveEvents
       idActiveEvents = activeEvents.map(_.id.toString).mkString("'", "','", "'")
       query =
         s"""
@@ -75,5 +69,45 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
            |WHERE b.eventId IN [$idActiveEvents]""".stripMargin
       result <- cluster.query(query).map(_.rowsAs(Bet.codec).getOrElse(Seq()).toSeq)
     } yield result
+  }
+
+  def createBet(data: Bet, userId: String): Future[Bet] = {
+
+    val newData = data.copy(data.id, data.eventId, userId, data.name, data.price)
+
+    for {
+      checkActiveEventId<- validationActiveEventIdOfBet(newData)
+      checkRangePrice <- validationRangeBetPrice(newData)
+      bet <- if ( checkActiveEventId && checkRangePrice) defaultCollection.insert(entityToId(newData), newData)(Bet.codec).map(_ => newData) else Future.failed(new RuntimeException(""))
+    } yield bet
+
+  }
+
+  override def entityToId(data: Bet): String = {
+    s"B:${data.id}"
+  }
+
+  private def validationRangeBetPrice(data: Bet): Future[Boolean] = {
+    if (data.price >= 10 && data.price <= 10000) {
+      Future(true)
+    } else {
+      Future(false)
+    }
+  }
+
+  private def validationActiveEventIdOfBet(data: Bet): Future[Boolean] = {
+//     rework logic
+        val isActiveBetByEventId = for {
+          activeEvents <- eventService.getActiveEvents
+          idActiveEvents = activeEvents.map(_.id.toString)
+          isActive = idActiveEvents.contains(data.eventId)
+        } yield isActive
+        isActiveBetByEventId
+
+//
+//    for {
+//      isActiveEventInBet <- eventService.getById(data.eventId)
+//      isActiveEvent = if (isActiveEventInBet.isEmpty) true else false
+//    } yield isActiveEvent
   }
 }

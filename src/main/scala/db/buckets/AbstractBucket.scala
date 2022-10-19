@@ -8,8 +8,6 @@ abstract class AbstractBucket[T] {
 
   def getById(id: String): Future[Option[T]]
 
-  def save(data: T): Future[T]
-
   def deleteById(id: String): Future[Unit]
 
   def asObject(doc:GetResult):Option[T]

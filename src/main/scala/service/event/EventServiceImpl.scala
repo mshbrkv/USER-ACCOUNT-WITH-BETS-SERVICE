@@ -10,7 +10,25 @@ class EventServiceImpl(implicit ex: ExecutionContext) extends EventService {
 
   private val headers = Seq(("Content-Type" -> "application/json"), ("charset" -> "utf-8"))
 
-  private def gggg(response: Response): Seq[Event] = {
+  override def getById(eventId: String): Future[Option[Event]] = {
+    for {
+      allActiveEvents <- getActiveEventsFromAllPages
+      a1 = allActiveEvents.map(_.id.toString)
+
+    } yield a1
+  }
+
+  override def getActiveEventsFromAllPages: Future[Seq[Event]] = {
+
+    val lastPage = getLastPage
+    val seqOfPages = Seq.range(0, lastPage, 1)
+
+    val response = seqOfPages.map(page => requests.get(s"http://localhost:8082/events/in_play=true?page=$page", readTimeout = 600000, connectTimeout = 6000000, headers = headers))
+
+    Future(response.flatMap(it => getActiveEventsFromPage(it)))
+  }
+
+  private def getActiveEventsFromPage(response: Response): Seq[Event] = {
     (for {
       responseAsString <- parse(response.text()).toOption
       responseCursor = responseAsString.hcursor
@@ -21,16 +39,6 @@ class EventServiceImpl(implicit ex: ExecutionContext) extends EventService {
       .getOrElse(Seq())
       .toSeq.flatMap(_.toOption)
   }
-  override def getActiveBetsByEvent: Future[Seq[Event]] = {
-
-    val lastPage = getLastPage
-    val seqOfPages=Seq.range(0,lastPage,1)
-
-    val response = seqOfPages.map(page =>  requests.get(s"http://localhost:8082/events/in_play=true?page=$page", readTimeout = 600000, connectTimeout = 6000000, headers = headers))
-
-       Future(response.flatMap(it => gggg(it)))
-  }
-
 
   private def getLastPage: Int = {
 
