@@ -15,7 +15,6 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
   final val bucket = cluster.bucket("Bets")
   final val defaultCollection: AsyncCollection = bucket.defaultCollection
 
-
   override def getById(id: String): Future[Option[Bet]] = {
     defaultCollection.get(convertIdToDocId(id)).map(asObject)
   }
@@ -26,7 +25,6 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
       case Failure(exception) => throw exception
     }
   }.toOption
-
 
   override def deleteById(id: String): Future[Unit] = defaultCollection.remove(convertIdToDocId(id)).map(_ => ())
 
@@ -41,7 +39,6 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
          |SELECT b.*
          |FROM `Bets` b
          |WHERE b.userId='$id'""".stripMargin
-
 
     cluster.query(query)
       .map(_.rowsAs(Bet.codec).getOrElse(Seq()).toSeq)
@@ -60,7 +57,7 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
 
   def getActiveBets: Future[Seq[Bet]] = {
     for {
-      activeEvents <- eventService.getActiveEvents
+      activeEvents <- eventService.getActiveEventsFromAllPages
       idActiveEvents = activeEvents.map(_.id.toString).mkString("'", "','", "'")
       query =
         s"""
@@ -76,18 +73,17 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
     val newData = data.copy(data.id, data.eventId, userId, data.name, data.price)
 
     for {
-      checkActiveEventId<- validationActiveEventIdOfBet(newData)
-      checkRangePrice <- validationRangeBetPrice(newData)
-      bet <- if ( checkActiveEventId && checkRangePrice) defaultCollection.insert(entityToId(newData), newData)(Bet.codec).map(_ => newData) else Future.failed(new RuntimeException(""))
+      checkActiveEventId <- validationActiveEventIdOfBet(newData)
+      checkPrice <- validationBetPriceInGivenRange(newData)
+      bet <- if (checkActiveEventId && checkPrice) defaultCollection.insert(entityToId(newData), newData)(Bet.codec).map(_ => newData) else Future.failed(new RuntimeException(""))
     } yield bet
-
   }
 
   override def entityToId(data: Bet): String = {
     s"B:${data.id}"
   }
 
-  private def validationRangeBetPrice(data: Bet): Future[Boolean] = {
+  private def validationBetPriceInGivenRange(data: Bet): Future[Boolean] = {
     if (data.price >= 10 && data.price <= 10000) {
       Future(true)
     } else {
@@ -96,18 +92,13 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
   }
 
   private def validationActiveEventIdOfBet(data: Bet): Future[Boolean] = {
-//     rework logic
-        val isActiveBetByEventId = for {
-          activeEvents <- eventService.getActiveEvents
-          idActiveEvents = activeEvents.map(_.id.toString)
-          isActive = idActiveEvents.contains(data.eventId)
-        } yield isActive
-        isActiveBetByEventId
-
-//
-//    for {
-//      isActiveEventInBet <- eventService.getById(data.eventId)
-//      isActiveEvent = if (isActiveEventInBet.isEmpty) true else false
-//    } yield isActiveEvent
+    for {
+      event <- eventService.getById(data.eventId)
+      isActive = if (event.get.inPlay.equals(true)) {
+        true
+      } else {
+        false
+      }
+    } yield isActive
   }
 }

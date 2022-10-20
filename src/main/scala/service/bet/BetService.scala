@@ -14,7 +14,6 @@ trait BetService {
 
   def getActiveBets: Future[Seq[Bet]]
 
-  def createBet(data: Bet, userId:String): Future[Bet]
-
+  def createBet(data: Bet, userId: String): Future[Bet]
 
 }

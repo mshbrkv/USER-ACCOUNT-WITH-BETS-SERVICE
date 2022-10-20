@@ -28,7 +28,4 @@ object DBConnection {
         .environment(env)
     )
     .get
-
-
-  //  cluster.bucket("User").defaultCollection
 }

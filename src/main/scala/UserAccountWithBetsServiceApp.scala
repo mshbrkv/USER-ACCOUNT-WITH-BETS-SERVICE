@@ -10,7 +10,6 @@ import service.user.UserServiceImpl
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
-
 object UserAccountWithBetsServiceApp extends App {
   val cluster = DBConnection.cluster
 
@@ -22,11 +21,9 @@ object UserAccountWithBetsServiceApp extends App {
   val userService = new UserServiceImpl(bucketUser)
   val betService = new BetServiceImpl(bucketBet)
 
-
   val routes = {
     new Routes(userService, betService, eventService).routes
   }
 
   Http().newServerAt("0.0.0.0", 8080).bindFlow(routes)
-
 }
