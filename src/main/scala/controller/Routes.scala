@@ -13,7 +13,7 @@ import service.user.UserService
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-class Routes(userService: UserService, betService: BetService, eventService: EventService)
+case class Routes(userService: UserService, betService: BetService, eventService: EventService)
             (implicit ex: ExecutionContext) extends FailFastCirceSupport {
 
   private val routesWithUserId: Route = pathPrefix("user") {
@@ -35,7 +35,7 @@ class Routes(userService: UserService, betService: BetService, eventService: Eve
           eventId => {
             get {
               onComplete(betService.getBetByEventIdOneUser(id, eventId)) {
-                case Success(value) => complete(StatusCodes.OK ->value.map(_.asJson))
+                case Success(value) => complete(StatusCodes.OK ->value)
                 case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
               }
             }
