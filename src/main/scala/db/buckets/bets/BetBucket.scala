@@ -44,12 +44,12 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
       .map(_.rowsAs(Bet.codec).getOrElse(Seq()).toSeq)
   }
 
-  def getBetByEventIdOneUser(userId: String, eventId: String): Future[Seq[Bet]] = {
+  def getBetByEventId( eventId: String): Future[Seq[Bet]] = {
     val query =
       s"""
          |SELECT b.*
          |FROM `Bets` b
-         |WHERE b.userId='$userId' AND b.eventId='$eventId'""".stripMargin
+         |WHERE b.eventId='$eventId'""".stripMargin
 
     cluster.query(query)
       .map(_.rowsAs(Bet.codec).getOrElse(Seq()).toSeq)

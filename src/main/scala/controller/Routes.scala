@@ -13,39 +13,29 @@ import service.user.UserService
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-case class Routes(userService: UserService, betService: BetService, eventService: EventService)
+class Routes(userService: UserService, betService: BetService, eventService: EventService)
             (implicit ex: ExecutionContext) extends FailFastCirceSupport {
+
 
   private val routesWithUserId: Route = pathPrefix("user") {
     pathPrefix("id" / Segment) { id => {
       get { //work
         pathEndOrSingleSlash {
           onComplete(userService.getUserById(id)) {
-            case Success(value) => {
+            case Success(value) =>
               value match {
                 case Some(value) => complete(StatusCodes.OK -> value.asJson)
-                case None => complete(StatusCodes.InternalServerError -> "Missing user")
+                case None => complete(StatusCodes.InternalServerError)
               }
-            }
-            case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
+            case Failure(exception) => complete(StatusCodes.InternalServerError)
           }
         }
       } ~
-        pathPrefix("by_eventId" / Segment) { //work
-          eventId => {
-            get {
-              onComplete(betService.getBetByEventIdOneUser(id, eventId)) {
-                case Success(value) => complete(StatusCodes.OK ->value)
-                case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
-              }
-            }
-          }
-        } ~
         path("user_bets") { //work
           get {
             onComplete(betService.getBetByUserId(id)) {
               case Success(value) => complete(StatusCodes.OK -> value.map(_.asJson))
-              case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
+              case Failure(exception) => complete(StatusCodes.InternalServerError)
             }
           }
         } ~
@@ -54,7 +44,7 @@ case class Routes(userService: UserService, betService: BetService, eventService
             case Success(value) => complete(StatusCodes.OK -> "user was removed")
             case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
           }
-        }~
+        } ~
         path("new_bet") {
           entity(as[Bet]) {
             bet => {
@@ -75,27 +65,19 @@ case class Routes(userService: UserService, betService: BetService, eventService
             post {
               onComplete(userService.createUser(user)) {
                 case Success(value) => complete(StatusCodes.OK -> "user was created")
-                case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
+                case Failure(exception) => complete(StatusCodes.InternalServerError)
               }
             }
           }
         }
       }
   }
-  private val eventsRoutes = pathPrefix("events") {
-    path("active_events") { //work
-      get {
-        onComplete(eventService.getActiveEventsFromAllPages) {
-          case Success(value) => complete(StatusCodes.OK -> value)
-          case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
-        }
-      }
-    }
-  }
   private val betRoutes: Route = pathPrefix("bets") {
     path("betId" / Segment) {
       betId => {
-        get { //work
+        get {
+          pathEndOrSingleSlash {
+          //work
           onComplete(betService.getBetById(betId)) {
             case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
             case Success(value) =>
@@ -104,17 +86,28 @@ case class Routes(userService: UserService, betService: BetService, eventService
                 case None => complete(StatusCodes.InternalServerError -> "Missing bet")
               }
           }
+          }
         }
       }
     } ~
+      pathPrefix("by_eventId" / Segment) { //work
+        eventId => {
+          get {
+            onComplete(betService.getBetByEventId(eventId)) {
+              case Success(value) => complete(StatusCodes.OK -> value)
+              case Failure(exception) => complete(StatusCodes.InternalServerError)
+            }
+          }
+        }
+      } ~
       path("active_bets") { //work
         get {
           onComplete(betService.getActiveBets) {
             case Success(value) => complete(StatusCodes.OK -> value)
-            case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
+            case Failure(exception) => complete(StatusCodes.InternalServerError)
           }
         }
       }
   }
-  val routes: Route = routesWithUserId ~ betRoutes ~ eventsRoutes
+  val routes: Route = routesWithUserId ~ betRoutes
 }

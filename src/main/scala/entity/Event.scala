@@ -6,7 +6,7 @@ import io.circe.{Decoder, Encoder}
 
 import java.util.UUID
 
-final case class Event(id: UUID, name: String, startTime: String, inPlay: Boolean)
+final case class Event(id: String, name: String, startTime: String, inPlay: Boolean)
 
 object Event {
   implicit val codec: Codec[Event] = Codec.codec[Event]
