@@ -23,38 +23,38 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 class UserBucketSpec extends AsyncFlatSpec with Matchers with ScalatestRouteTest with ScalaFutures with OptionValues {
 
   implicit val ex: ExecutionContextExecutor = ExecutionContext.global
-  override implicit val patienceConfig = PatienceConfig(timeout = Span(20, Seconds),
+  override implicit val patienceConfig: PatienceConfig = PatienceConfig(timeout = Span(20, Seconds),
     interval = Span(20, Seconds))
 
-
-  //  implicit val actor: ActorSystem = DBConnection.actor
-  //  val env: ClusterEnvironment = DBConnection.env
   val cluster: AsyncCluster = mock[AsyncCluster]
   val bucket: AsyncBucket = mock[AsyncBucket]
   val defaultCollectionMock: AsyncCollection = mock[AsyncCollection]
 
-
   when(cluster.bucket("User")).thenReturn(bucket)
   when(bucket.defaultCollection).thenReturn(defaultCollectionMock)
 
-  //  val defaultCollection: AsyncCollection = cluster.bucket("User").defaultCollection
   val userBucket = new UserBucket(cluster)
   val testUser: User = User("003", "", "", "", 100)
   val testUserId: String = "003"
 
-
   it should "get user by id" in {
 
+    val result = GetResult("", getUser(true), 1, 1, None, JsonTranscoder.Instance)
+    val futureResult = Future(result)
     when(defaultCollectionMock.get(anyString(), any(classOf[Duration])))
-      .thenReturn(Future(GetResult("", getUser(true), 1, 1, None, JsonTranscoder.Instance)))
+      .thenReturn(futureResult)
 
     val actual: Future[Option[User]] = userBucket.getById(testUserId)
 
-    whenReady(actual) { res =>
-      res.value.id shouldBe "003"
-    }
+    //    whenReady(actual) { res =>
+    //      res.value.id shouldBe "003"
+    //    }
+
+    //Thread.sleep(1000)
 
     assert(actual.futureValue == Option(testUser))
+
+    //TODO solve problems with parsing
   }
 
 

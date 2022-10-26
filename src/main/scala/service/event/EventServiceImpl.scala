@@ -6,7 +6,7 @@ import requests.Response
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class EventServiceImpl(implicit ex: ExecutionContext) extends EventService {
+class EventServiceImpl()(implicit ex: ExecutionContext) extends EventService {
 
   private val headers = Seq(("Content-Type" -> "application/json"), ("charset" -> "utf-8"))
 
@@ -16,6 +16,7 @@ class EventServiceImpl(implicit ex: ExecutionContext) extends EventService {
       responseAsString <- parse(response.text()).toOption
       event = responseAsString.as[Event]
     } yield event.getOrElse(Option.empty.get)
+    requests.get
     Future(result)
   }
 
@@ -24,7 +25,7 @@ class EventServiceImpl(implicit ex: ExecutionContext) extends EventService {
     val lastPage = getLastPage
     val seqOfPages = Seq.range(0, lastPage, 1)
 
-    val response = seqOfPages.map(page => requests.get(s"http://localhost:8082/events/in_play=true?page=$page", readTimeout = 600000, connectTimeout = 6000000, headers = headers))
+    val response: Seq[Response] = seqOfPages.map(page => requests.get(s"http://localhost:8082/events/in_play=true?page=$page", readTimeout = 600000, connectTimeout = 6000000, headers = headers))
 
     Future(response.flatMap(it => getActiveEventsFromPage(it)))
   }
