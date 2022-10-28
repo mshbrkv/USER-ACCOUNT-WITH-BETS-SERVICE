@@ -16,7 +16,7 @@ class UserBucket(cluster: AsyncCluster)
     defaultCollection.get(convertIdToDocId(id)).map(_.contentAs[User].toOption)
   }
 
-  override def convertIdToDocId(id: String): String = {
+   def convertIdToDocId(id: String): String = {
     s"U:$id"
   }
 
