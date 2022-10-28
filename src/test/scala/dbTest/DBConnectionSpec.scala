@@ -1,0 +1,5 @@
+package dbTest
+
+class DBConnectionSpec {
+
+}

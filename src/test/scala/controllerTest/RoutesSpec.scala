@@ -6,6 +6,7 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import controller.Routes
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import entity.{Bet, Event, User}
+import io.circe.Json
 import io.circe.syntax.EncoderOps
 import org.mockito.MockitoSugar.{mock, when}
 import org.scalatest.flatspec.AsyncFlatSpec
@@ -22,7 +23,7 @@ class RoutesSpec extends AsyncFlatSpec with Matchers with ScalatestRouteTest wit
   val userService: UserService = mock[UserService]
   val betsService: BetService = mock[BetService]
   val eventService: EventService = mock[EventService]
-  val routesClas = new Routes(userService, betsService, eventService)
+  val routesClas = new Routes(userService, betsService)
 
   val routes: Route = routesClas.routes
 
@@ -36,7 +37,7 @@ class RoutesSpec extends AsyncFlatSpec with Matchers with ScalatestRouteTest wit
     when(userService.getUserById(testUserId)).thenReturn(Future(Option(testUser)))
     Get(s"/user/id/$testUserId") ~> routes ~> check {
       status shouldBe StatusCodes.OK
-      responseAs[String] shouldEqual testUser.asJson.noSpaces
+      responseAs[Json] shouldEqual testUser.asJson
     }
   }
 
@@ -56,9 +57,9 @@ class RoutesSpec extends AsyncFlatSpec with Matchers with ScalatestRouteTest wit
 
   it should "return all bet of user case Success" in {
     when(betsService.getBetByUserId(testUserId)).thenReturn(Future(Seq(testBet)))
-    Get(s"/user/id/${testUserId}/user_bets") ~> routes ~> check {
+    Get(s"/user/id/$testUserId/user_bets") ~> routes ~> check {
       status shouldBe StatusCodes.OK
-      responseAs[String] shouldEqual Seq(testBet).asJson.noSpaces
+      responseAs[Json] shouldEqual Seq(testBet).asJson
     }
   }
 
@@ -86,7 +87,7 @@ class RoutesSpec extends AsyncFlatSpec with Matchers with ScalatestRouteTest wit
 
   it should "create new bet success" in {
     when(betsService.createBet(testBet, testUserId)).thenReturn(Future(testBet))
-    Post(s"/user/id/${testUserId}/new_bet", testBet) ~> routes ~> check {
+    Post(s"/user/id/$testUserId/new_bet", testBet) ~> routes ~> check {
       status shouldBe StatusCodes.OK
       responseAs[String] shouldBe "bet was created"
     }
@@ -94,7 +95,7 @@ class RoutesSpec extends AsyncFlatSpec with Matchers with ScalatestRouteTest wit
 
   it should "create new bet failed" in {
     when(betsService.createBet(testBet, testUserId)).thenReturn(Future.failed(new Throwable))
-    Post(s"/user/id/${testUserId}/new_bet", testBet) ~> routes ~> check {
+    Post(s"/user/id/$testUserId/new_bet", testBet) ~> routes ~> check {
       status shouldBe StatusCodes.InternalServerError
       responseAs[String] shouldBe "bet doesnt meet all conditions"
     }
@@ -115,12 +116,26 @@ class RoutesSpec extends AsyncFlatSpec with Matchers with ScalatestRouteTest wit
     }
   }
 
+  it should "get bet by id Success" in {
+    when(betsService.getBetById(testBet.id)).thenReturn(Future(Option(testBet)))
+    Get(s"/bets/betId/001") ~> routes ~> check {
+      status shouldBe StatusCodes.OK
+      responseAs[Json] shouldBe Option(testBet).asJson
+    }
+  }
+
+  it should "get bet by id failed" in {
+    when(betsService.getBetById(testBet.id)).thenReturn(Future.failed(new Throwable))
+    Get(s"/bets/betId/${testBet.id}") ~> routes ~> check {
+      status shouldBe StatusCodes.InternalServerError
+    }
+  }
 
   it should "get bet by event id Success" in {
     when(betsService.getBetByEventId("001")).thenReturn(Future(Seq(testBet)))
     Get(s"/bets/by_eventId/001") ~> routes ~> check {
       status shouldBe StatusCodes.OK
-      responseAs[String] shouldBe Seq(testBet).asJson.noSpaces
+      responseAs[Json] shouldBe Seq(testBet).asJson
     }
   }
 
@@ -132,20 +147,4 @@ class RoutesSpec extends AsyncFlatSpec with Matchers with ScalatestRouteTest wit
   }
 
 
-  it should "get active bets success" in {
-    when(betsService.getActiveBets).thenReturn(Future(Seq(testBet)))
-    Get("/bets/active_bets") ~> routes ~> check {
-      status shouldBe StatusCodes.OK
-      responseAs[String] shouldBe Seq(testBet).asJson.noSpaces
-    }
-  }
-
-
-  it should "get active bets failed" in {
-    when(betsService.getActiveBets).thenReturn(Future.failed(new Throwable))
-    Get("/bets/active_bets") ~> routes ~> check {
-      status shouldBe StatusCodes.InternalServerError
-
-    }
-  }
 }

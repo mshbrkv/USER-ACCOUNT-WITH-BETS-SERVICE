@@ -7,5 +7,4 @@ import org.scalatest.matchers.should.Matchers
 import scala.language.postfixOps
 
 class EventServiceImplSpec extends AsyncFlatSpec with Matchers with ScalatestRouteTest {
-
 }

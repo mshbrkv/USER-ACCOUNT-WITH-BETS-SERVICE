@@ -7,15 +7,13 @@ import akka.http.scaladsl.server.Route
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.syntax.EncoderOps
 import service.bet.BetService
-import service.event.EventService
 import service.user.UserService
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-class Routes(userService: UserService, betService: BetService, eventService: EventService)
+class Routes(userService: UserService, betService: BetService)
             (implicit ex: ExecutionContext) extends FailFastCirceSupport {
-
 
   private val routesWithUserId: Route = pathPrefix("user") {
     pathPrefix("id" / Segment) { id => {
@@ -77,15 +75,15 @@ class Routes(userService: UserService, betService: BetService, eventService: Eve
       betId => {
         get {
           pathEndOrSingleSlash {
-          //work
-          onComplete(betService.getBetById(betId)) {
-            case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
-            case Success(value) =>
-              value match {
-                case Some(value) => complete(StatusCodes.OK -> value.asJson)
-                case None => complete(StatusCodes.InternalServerError -> "Missing bet")
-              }
-          }
+            //work
+            onComplete(betService.getBetById(betId)) {
+              case Failure(exception) => complete(StatusCodes.InternalServerError -> exception)
+              case Success(value) =>
+                value match {
+                  case Some(value) => complete(StatusCodes.OK -> value.asJson)
+                  case None => complete(StatusCodes.InternalServerError -> "Missing bet")
+                }
+            }
           }
         }
       }
@@ -97,14 +95,6 @@ class Routes(userService: UserService, betService: BetService, eventService: Eve
               case Success(value) => complete(StatusCodes.OK -> value)
               case Failure(exception) => complete(StatusCodes.InternalServerError)
             }
-          }
-        }
-      } ~
-      path("active_bets") { //work
-        get {
-          onComplete(betService.getActiveBets) {
-            case Success(value) => complete(StatusCodes.OK -> value)
-            case Failure(exception) => complete(StatusCodes.InternalServerError)
           }
         }
       }

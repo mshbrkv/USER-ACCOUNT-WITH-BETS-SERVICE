@@ -38,43 +38,34 @@ class UserBucketSpec extends AsyncFlatSpec with Matchers with ScalatestRouteTest
   val testUserId: String = "003"
 
   it should "get user by id" in {
-
-    val result = GetResult("", getUser(true), 1, 1, None, JsonTranscoder.Instance)
+    val result = GetResult("", getUser(false), 1, 1, None, JsonTranscoder.Instance)
     val futureResult = Future(result)
     when(defaultCollectionMock.get(anyString(), any(classOf[Duration])))
       .thenReturn(futureResult)
 
+    Thread.sleep(1000)
     val actual: Future[Option[User]] = userBucket.getById(testUserId)
-
-    //    whenReady(actual) { res =>
-    //      res.value.id shouldBe "003"
-    //    }
-
-    //Thread.sleep(1000)
-
     assert(actual.futureValue == Option(testUser))
+      }
 
-    //TODO solve problems with parsing
+
+      def getUser(shouldGetValue: Boolean): Either[Array[Byte], JsonObject] = {
+
+        if (shouldGetValue) {
+          Left(serialise(Option(testUser)))
+        } else {
+          Right(JsonObject.fromJson(testUser.asJson.toString()))
+        }
+      }
+
+
+      def serialise(value: Any): Array[Byte] = {
+        val stream: ByteArrayOutputStream = new ByteArrayOutputStream()
+        val oos = new ObjectOutputStream(stream)
+        oos.writeObject(value)
+        oos.close()
+        stream.toByteArray
+      }
+
+
   }
-
-
-  def getUser(shouldGetValue: Boolean): Either[Array[Byte], JsonObject] = {
-
-    if (shouldGetValue) {
-      Left(serialise(testUser.asJson.toString()))
-    } else {
-      Right(JsonObject.fromJson(testUser.asJson.toString()))
-    }
-  }
-
-
-  def serialise(value: Any): Array[Byte] = {
-    val stream: ByteArrayOutputStream = new ByteArrayOutputStream()
-    val oos = new ObjectOutputStream(stream)
-    oos.writeObject(value)
-    oos.close()
-    stream.toByteArray
-  }
-
-
-}

@@ -33,22 +33,15 @@ class BetServiceImplSpec extends AsyncFlatSpec with Matchers with ScalatestRoute
     assert(actual.futureValue == Seq(testBet))
   }
 
-
   it should "get bet by event id" in {
     when(betBucket.getBetByEventId(testEventId)).thenReturn(Future(Seq(testBet)))
     val actual = betService.getBetByEventId(testEventId)
     assert(actual.futureValue == Seq(testBet))
   }
 
-  it should "get active bets" in{
-    when(betBucket.getActiveBets).thenReturn(Future(Seq(testBet)))
-    val actual = betService.getActiveBets
-    assert(actual.futureValue==Seq(testBet))
-  }
-
-  it should "create bet" in{
-    when(betBucket.createBet(testBet,testUserId)).thenReturn(Future(testBet))
-    val actual=betService.createBet(testBet, testUserId)
-    assert(actual.futureValue==testBet)
+  it should "create bet" in {
+    when(betBucket.createBet(testBet, testUserId)).thenReturn(Future(testBet))
+    val actual = betService.createBet(testBet, testUserId)
+    assert(actual.futureValue == testBet)
   }
 }

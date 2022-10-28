@@ -5,7 +5,7 @@ import entity.User
 import scala.concurrent.Future
 
 trait UserService {
-  def getUserById(id: String):  Future[Option[User]]
+  def getUserById(id: String): Future[Option[User]]
 
   def createUser(user: User): Future[User]
 

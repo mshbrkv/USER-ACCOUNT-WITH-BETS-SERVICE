@@ -19,13 +19,11 @@ class UserServiceImplSpec extends AsyncFlatSpec with Matchers with ScalatestRout
   val testUser: User = User("003", "", "", "", 100)
   val testUserId: String = "003"
 
-
   it should "getUserById" in {
     when(userBucket.getById(testUserId)).thenReturn(Future(Option(testUser)))
     val actual = userService.getUserById(testUserId)
     assert(actual.futureValue == Option(testUser))
   }
-
 
   it should "createUser" in {
     when(userBucket.save(testUser)).thenReturn(Future(testUser))
