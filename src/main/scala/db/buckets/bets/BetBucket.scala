@@ -5,6 +5,7 @@ import db.buckets.AbstractBucket
 import entity.Bet
 import service.event.EventService
 
+import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
 
 class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: ExecutionContext) extends AbstractBucket[Bet] {
@@ -13,7 +14,8 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
   final val defaultCollection: AsyncCollection = bucket.defaultCollection
 
   override def getById(id: String): Future[Option[Bet]] = {
-    defaultCollection.get(convertIdToDocId(id)).map(_.contentAs[Bet].toOption)
+    val eventualResult = defaultCollection.get(convertIdToDocId(id), Duration.apply("5s"))
+    eventualResult.map(_.contentAs[Bet].toOption)
   }
 
   override def deleteById(id: String): Future[Unit] = defaultCollection.remove(convertIdToDocId(id)).map(_ => ())
@@ -40,7 +42,6 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
          |SELECT b.*
          |FROM `Bets` b
          |WHERE b.eventId='$eventId'""".stripMargin
-
     cluster.query(query)
       .map(_.rowsAs(Bet.codec).getOrElse(Seq()).toSeq)
   }

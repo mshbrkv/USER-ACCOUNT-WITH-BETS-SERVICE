@@ -18,6 +18,7 @@ import org.scalatest.matchers.should.Matchers
 import java.io.{ByteArrayOutputStream, ObjectOutputStream}
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.util.Try
 
 class UserBucketSpec extends AsyncFlatSpec with Matchers with ScalatestRouteTest with ScalaFutures with OptionValues {
 
@@ -34,13 +35,12 @@ class UserBucketSpec extends AsyncFlatSpec with Matchers with ScalatestRouteTest
   val testUser: User = User("001", "", "", "", 100)
   val testUserId: String = "001"
   val mutationResult: MutationResult = mock[MutationResult]
-
+  val getResult: GetResult =mock[GetResult]
 
   it should "get user by id" in {
-    val result = GetResult("", getUser(false), 1, 0L, None, JsonTranscoder.Instance)
-    when(defaultCollectionMock.get(anyString(), any(classOf[Duration])))
-      .thenReturn(Future.successful(result))
-
+    when(defaultCollectionMock.get(anyString(), any[Duration]))
+      .thenReturn(Future.successful(getResult))
+    when(getResult.contentAs[User]).thenReturn(Try(testUser))
     val actual: Future[Option[User]] = userBucket.getById(testUserId)
     assert(actual.futureValue == Option(testUser))
   }
@@ -50,7 +50,6 @@ class UserBucketSpec extends AsyncFlatSpec with Matchers with ScalatestRouteTest
     val actual = userBucket.save(testUser)
     assert(actual.futureValue == testUser)
   }
-
 
   it should "delete by id" in {
     when(defaultCollectionMock.remove("U:001")).thenReturn(Future.successful(mutationResult))
