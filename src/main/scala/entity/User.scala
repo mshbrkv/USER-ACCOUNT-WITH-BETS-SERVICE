@@ -10,8 +10,7 @@ final case class User(id: String, firstName: String, lastName: String, email: St
 
 object User {
   implicit val codec: Codec[User] = Codec.codec[User]
-
-    implicit val decoder: Decoder[User] = deriveDecoder
-    implicit val encoder: Encoder[User] = deriveEncoder
+  implicit val decoder: Decoder[User] = deriveDecoder
+  implicit val encoder: Encoder[User] = deriveEncoder
 }
 

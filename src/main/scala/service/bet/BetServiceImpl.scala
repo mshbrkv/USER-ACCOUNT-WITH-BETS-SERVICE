@@ -3,14 +3,16 @@ package service.bet
 import db.buckets.bets.BetBucket
 import entity.Bet
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class BetServiceImpl(val bucket: BetBucket) extends BetService {
+
+class BetServiceImpl(val bucket: BetBucket)(implicit ex: ExecutionContext) extends BetService {
 
   override def getBetById(id: String): Future[Option[Bet]] = bucket.getById(id)
 
   override def getBetByUserId(id: String): Future[Seq[Bet]] = bucket.getBetByUserId(id)
 
-  override def getBetByEventIdOneUser(id: String, userId: String): Future[Seq[Bet]] = bucket.getBetByEventIdOneUser(id, userId)
+  override def getBetByEventId(eventId: String): Future[Seq[Bet]] = bucket.getBetByEventId(eventId)
 
+  override def createBet(data: Bet, userId: String): Future[Bet] = bucket.createBet(data, userId)
 }

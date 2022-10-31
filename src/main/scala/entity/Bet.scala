@@ -8,7 +8,6 @@ final case class Bet(id: String, eventId: String, userId: String, name: String, 
 
 object Bet {
   implicit val codec: Codec[Bet] = Codec.codec[Bet]
-
   implicit val decoder: Decoder[Bet] = deriveDecoder
   implicit val encoder: Encoder[Bet] = deriveEncoder
 }
