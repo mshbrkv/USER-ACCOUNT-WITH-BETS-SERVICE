@@ -1,7 +1,8 @@
+import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
+import akka.stream.{ActorMaterializer, Materializer}
 import controller.Routes
 import db.DBConnection
-import db.DBConnection.actor
 import db.buckets.bets.BetBucket
 import db.buckets.user.UserBucket
 import service.bet.BetServiceImpl
@@ -12,8 +13,10 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 object UserAccountWithBetsServiceApp extends App {
   val cluster = DBConnection.cluster
-
+  implicit val system: ActorSystem = ActorSystem("bet-service")
+//  implicit val mat: Materializer = ActorMaterializer()
   implicit val ec: ExecutionContextExecutor = ExecutionContext.global
+
 
   val bucketUser = new UserBucket(cluster.async)
   val eventService = new EventServiceImpl()
@@ -26,4 +29,6 @@ object UserAccountWithBetsServiceApp extends App {
   }
 
   Http().newServerAt("0.0.0.0", 8080).bindFlow(routesForBetAndUser)
+
+
 }
