@@ -1,7 +1,10 @@
 version := "0.1.0-SNAPSHOT"
 
 scalaVersion := "2.13.9"
+
+
 resolvers += "confluent" at "https://packages.confluent.io/maven/"
+
 libraryDependencies ++= {
   val akkaHttpV = "10.4.0"
   val akkaV = "2.7.0"
@@ -9,8 +12,11 @@ libraryDependencies ++= {
   val circeV = "0.14.3"
   val akkaHttpCirceV = "1.39.2"
   Seq(
-
-    "io.confluent" % "kafka-avro-serializer" % "3.3.1",
+    "io.confluent" % "kafka-avro-serializer" % "7.3.0",
+    "io.confluent" % "kafka-schema-registry-client" % "7.3.0",
+    "org.example" % "avroSelectionSchema" % "1.0.1-SNAPSHOT",
+    "org.apache.avro" % "avro" % "1.11.0",
+    "org.apache.kafka" % "kafka-clients" % "3.3.1",
     "io.circe" %% "circe-core" % circeV,
     "io.circe" %% "circe-parser" % circeV,
     "io.circe" %% "circe-generic" % circeV,
@@ -18,7 +24,6 @@ libraryDependencies ++= {
     "org.slf4j" % "slf4j-api" % "2.0.3",
     "org.slf4j" % "slf4j-simple" % "2.0.3",
   ) ++ Seq(
-    "org.example" %% "avroSelectionSchema" % "1.0-SNAPSHOT",
     "com.typesafe.akka" %% "akka-stream-kafka" % "4.0.0",
     "com.typesafe.akka" %% "akka-stream" % "2.7.0",
     "com.typesafe.akka" %% "akka-actor" % akkaV,

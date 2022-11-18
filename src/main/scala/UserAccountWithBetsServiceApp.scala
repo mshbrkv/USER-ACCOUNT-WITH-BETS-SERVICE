@@ -24,7 +24,7 @@ object UserAccountWithBetsServiceApp extends App {
   val bucketBet = new BetBucket(cluster.async, eventService)
   val userService = new UserServiceImpl(bucketUser)
   val betService = new BetServiceImpl(bucketBet)
-  val consumer = new ConsumerConfiguration()
+  val consumer = new ConsumerConfiguration(bucketBet)
 
   val routesForBetAndUser = {
     new Routes(userService, betService).routes
