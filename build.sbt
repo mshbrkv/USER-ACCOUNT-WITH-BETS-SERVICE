@@ -14,7 +14,6 @@ libraryDependencies ++= {
   Seq(
     "io.confluent" % "kafka-avro-serializer" % "7.3.0",
     "io.confluent" % "kafka-schema-registry-client" % "7.3.0",
-    "org.example" % "avroSelectionSchema" % "1.0.1-SNAPSHOT",
     "org.apache.avro" % "avro" % "1.11.0",
     "org.apache.kafka" % "kafka-clients" % "3.3.1",
     "io.circe" %% "circe-core" % circeV,
