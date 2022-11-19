@@ -8,7 +8,7 @@ import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord, KafkaC
 import java.time.Duration
 import java.util.{Collections, Properties}
 
-class ConsumerConfiguration (bucket:BetBucket){
+class ConsumerConfiguration(bucket: BetBucket) {
 
   val consumerProps: Properties = new Properties()
   consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092")
@@ -24,18 +24,25 @@ class ConsumerConfiguration (bucket:BetBucket){
   val consumer: KafkaConsumer[String, Object] = new KafkaConsumer[String, Object](consumerProps)
   consumer.subscribe(Collections.singletonList(topic))
 
+val thread: Thread =new Thread{
+  override def run(){
+    while (true) {
+      val records = consumer.poll(Duration.ofMillis(1000))
+      val it = records.iterator()
+      while (it.hasNext) {
+        val msg = it.next()
 
-  while(true) {
-    val records = consumer.poll(Duration.ofMillis(1000))
-    val it = records.iterator()
-    while (it.hasNext) {
-      val msg = it.next()
-
-      val selection = jsonParse(msg)
-      bucket.updateBetToDB(selection)
-      println(s"key: ${msg.key()}, value:${msg.value()}")
+        val selection = jsonParse(msg)
+        bucket.updateBetToDB(selection)
+        println(s"key: ${msg.key()}, value:${msg.value()}")
+      }
     }
   }
+}
+  thread.start()
+  Thread.sleep(50)
+
+
 
   def jsonParse(msg: ConsumerRecord[String, Object]): Selection = {
     val jsonString = msg.value().toString
@@ -44,7 +51,6 @@ class ConsumerConfiguration (bucket:BetBucket){
     val jsonAsSelection = json.as[Selection]
     jsonAsSelection.toOption.orNull
   }
-
 
 
 }

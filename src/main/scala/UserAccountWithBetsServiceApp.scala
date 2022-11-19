@@ -30,7 +30,7 @@ object UserAccountWithBetsServiceApp extends App {
     new Routes(userService, betService).routes
   }
 
-  Http().newServerAt("0.0.0.0", 8080).bindFlow(routesForBetAndUser)
+  Http().newServerAt("0.0.0.0", 3030).bindFlow(routesForBetAndUser)
 
 
 }

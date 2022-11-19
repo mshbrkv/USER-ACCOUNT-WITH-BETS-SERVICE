@@ -108,4 +108,5 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
       newBet
     }
   }
+
 }
