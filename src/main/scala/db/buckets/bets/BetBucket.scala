@@ -3,6 +3,7 @@ package db.buckets.bets
 import com.couchbase.client.scala.{AsyncCluster, AsyncCollection}
 import db.buckets.AbstractBucket
 import entity.{Bet, Selection}
+import org.joda.time.DateTime
 import service.event.EventService
 
 import scala.concurrent.duration.Duration
@@ -22,6 +23,45 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
 
   override protected def convertIdToDocId(id: String): String = {
     s"B:$id"
+  }
+
+  def getNumOfBetsBySport(sport: String): Future[Int] = {
+    for {
+      needBets <- getBetsBySport(sport)
+      numOfBets = needBets.size
+    } yield numOfBets
+  }
+
+  def getBetsBySport(sport: String): Future[Seq[Bet]] = {
+    val query =
+      s"""SELECT b.* FROM `Bets` b WHERE b.sport='$sport'"""
+
+    cluster.query(query).map(_.rowsAs(Bet.codec).getOrElse(Seq()).toSeq)
+
+  }
+
+  def totalAmountFromBets(sport: String): Future[BigDecimal] = {
+    for {
+      needBets <- getBetsBySport(sport)
+      amountOfOneBet =needBets.map(bet=>bet.price)
+      amountOfAll=amountOfOneBet.sum
+    }yield  amountOfAll
+  }
+  def totalAmountFromWinBets(sport:String): Future[BigDecimal] ={
+    for {
+      needBets<-getBetsBySport(sport)
+      lostBets=needBets.filter(bet=>bet.status.equals("win"))
+      amountOfOneBet=lostBets.map(bet=>bet.price*bet.coefficient-bet.price)
+      amountOfAll=amountOfOneBet.sum
+    }yield amountOfAll
+  }
+
+  def incomeFromBetsBySport(sport:String): Future[BigDecimal] ={
+    for {
+      amountFromBets<-totalAmountFromBets(sport)
+      amountFromWinBets<-totalAmountFromWinBets(sport)
+      income=amountFromBets-amountFromWinBets
+    }yield income
   }
 
   def getBetByUserId(id: String): Future[Seq[Bet]] = {
@@ -47,16 +87,12 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
   }
 
   def createBet(data: Bet, userId: String): Future[Bet] = {
-    val newData = data.copy(data.id, data.eventId, data.selectionId, userId, data.name, data.price, data.status)
+    val newData = data.copy(data.id, data.sport, data.eventId, data.selectionId, userId, data.name, data.price, data.coefficient, data.status, DateTime.now().toString)
     for {
       checkActiveEventId <- validationActiveEventIdOfBet(newData)
       checkPrice <- validationBetPriceInGivenRange(newData)
       bet <- if (checkActiveEventId && checkPrice) defaultCollection.insert(entityToId(newData), newData)(Bet.codec).map(_ => newData) else Future.failed(new RuntimeException("Cannot create new bet"))
     } yield bet
-  }
-
-  override def entityToId(data: Bet): String = {
-    s"B:${data.id}"
   }
 
   private def validationBetPriceInGivenRange(data: Bet): Future[Boolean] = {
@@ -70,11 +106,15 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
     } yield isActive
   }
 
+  override def entityToId(data: Bet): String = {
+    s"B:${data.id}"
+  }
+
   def updateBetToDB(selection: Selection): Future[Bet] = {
     for {
       betDB <- updateBet(selection)
-      db <- defaultCollection.upsert(betDB.id, betDB)(Bet.codec)
-    } yield betDB
+      db <- defaultCollection.upsert(entityToId(betDB), betDB)(Bet.codec).map(_ => betDB)
+    } yield db
   }
 
   def updateBet(selection: Selection): Future[Bet] = {
@@ -98,13 +138,13 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
 
   def resultOfBet(selection: Selection, bet: Bet): Bet = {
     if (selection.result.equals("win")) {
-      val newBet = bet.copy(bet.id, bet.eventId, bet.selectionId, bet.userId, bet.name, bet.price, "win")
+      val newBet = bet.copy(bet.id, selection.sport, bet.eventId, bet.selectionId, bet.userId, bet.name, bet.price, selection.price, "win", bet.date)
       newBet
     } else if (selection.result.equals("lost")) {
-      val newBet = bet.copy(bet.id, bet.eventId, bet.selectionId, bet.userId, bet.name, bet.price, "lost")
+      val newBet = bet.copy(bet.id, selection.sport, bet.eventId, bet.selectionId, bet.userId, bet.name, bet.price, selection.price, "lost", bet.date)
       newBet
     } else {
-      val newBet = bet.copy(bet.id, bet.eventId, bet.selectionId, bet.userId, bet.name, bet.price, "cancel")
+      val newBet = bet.copy(bet.id, selection.sport, bet.eventId, bet.selectionId, bet.userId, bet.name, bet.price, selection.price, "cancel", bet.date)
       newBet
     }
   }

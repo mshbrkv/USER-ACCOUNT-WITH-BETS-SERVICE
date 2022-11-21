@@ -22,6 +22,7 @@ libraryDependencies ++= {
     "org.scalatest" %% "scalatest" % scalaTestV % "test",
     "org.slf4j" % "slf4j-api" % "2.0.3",
     "org.slf4j" % "slf4j-simple" % "2.0.3",
+    "joda-time" % "joda-time" % "2.12.1"
   ) ++ Seq(
     "com.typesafe.akka" %% "akka-stream-kafka" % "4.0.0",
     "com.typesafe.akka" %% "akka-stream" % "2.7.0",

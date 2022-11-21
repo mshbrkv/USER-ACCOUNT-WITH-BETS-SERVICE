@@ -14,4 +14,5 @@ trait BetService {
 
   def createBet(data: Bet, userId: String): Future[Bet]
 
+
 }

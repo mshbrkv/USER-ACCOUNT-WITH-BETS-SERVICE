@@ -5,6 +5,7 @@ import config.ConsumerConfiguration
 import controller.Routes
 import db.DBConnection
 import db.buckets.bets.BetBucket
+import db.buckets.reports.ReportBucket
 import db.buckets.user.UserBucket
 import service.bet.BetServiceImpl
 import service.event.EventServiceImpl
@@ -22,15 +23,17 @@ object UserAccountWithBetsServiceApp extends App {
   val bucketUser = new UserBucket(cluster.async)
   val eventService = new EventServiceImpl()
   val bucketBet = new BetBucket(cluster.async, eventService)
+
   val userService = new UserServiceImpl(bucketUser)
   val betService = new BetServiceImpl(bucketBet)
+  val reportBucket=new ReportBucket(cluster.async, betService)
   val consumer = new ConsumerConfiguration(bucketBet)
 
   val routesForBetAndUser = {
     new Routes(userService, betService).routes
   }
 
-  Http().newServerAt("0.0.0.0", 3030).bindFlow(routesForBetAndUser)
+  Http().newServerAt("0.0.0.0", 8080).bindFlow(routesForBetAndUser)
 
 
 }

@@ -7,14 +7,16 @@ import akka.http.scaladsl.server.Route
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.syntax.EncoderOps
 import service.bet.BetService
+import service.report.ReportService
 import service.user.UserService
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-class Routes(userService: UserService, betService: BetService)
+class Routes(userService: UserService, betService: BetService, reportService: ReportService)
             (implicit ex: ExecutionContext) extends FailFastCirceSupport {
 
+  val routes: Route = routesWithUserId ~ betRoutes
   private val routesWithUserId: Route = pathPrefix("user") {
     pathPrefix("id" / Segment) { id => {
       get { //work
@@ -99,5 +101,17 @@ class Routes(userService: UserService, betService: BetService)
         }
       }
   }
-  val routes: Route = routesWithUserId ~ betRoutes
+  private val reportRoute: Route = pathPrefix("reports") {
+    path("id" / Segment / "sport" / Segment) {
+      id => {
+        sport => {
+          post {
+
+          }
+
+        }
+
+      }
+    }
+  }
 }
