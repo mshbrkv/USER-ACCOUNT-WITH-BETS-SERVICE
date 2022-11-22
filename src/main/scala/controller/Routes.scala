@@ -16,7 +16,6 @@ import scala.util.{Failure, Success}
 class Routes(userService: UserService, betService: BetService, reportService: ReportService)
             (implicit ex: ExecutionContext) extends FailFastCirceSupport {
 
-  val routes: Route = routesWithUserId ~ betRoutes
   private val routesWithUserId: Route = pathPrefix("user") {
     pathPrefix("id" / Segment) { id => {
       get { //work
@@ -102,16 +101,27 @@ class Routes(userService: UserService, betService: BetService, reportService: Re
       }
   }
   private val reportRoute: Route = pathPrefix("reports") {
-    path("id" / Segment / "sport" / Segment) {
-      id => {
-        sport => {
-          post {
-
+    path("sport" / Segment) {
+      sport => {
+        post {
+          onComplete(reportService.createReport(sport)) {
+            case Success(value) => complete(StatusCodes.OK -> "report was created")
+            case Failure(exception) => complete(StatusCodes.InternalServerError)
           }
 
         }
 
       }
-    }
+    } ~
+      path("all_reports") {
+        get {
+          onComplete(reportService.getAllReports) {
+            case Success(value) => complete(StatusCodes.OK -> value.map(_.asJson))
+            case Failure(exception) => complete(StatusCodes.InternalServerError)
+          }
+        }
+      }
   }
+  val routes: Route = routesWithUserId ~ betRoutes ~ reportRoute
+
 }

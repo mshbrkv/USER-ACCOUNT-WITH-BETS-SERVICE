@@ -32,36 +32,38 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
     } yield numOfBets
   }
 
+  def incomeFromBetsBySport(sport: String): Future[BigDecimal] = {
+    for {
+      amountFromBets <- totalAmountFromBets(sport)
+      amountFromWinBets <- totalAmountFromWinBets(sport)
+      income = amountFromBets - amountFromWinBets
+    } yield income
+  }
+
+  def totalAmountFromBets(sport: String): Future[BigDecimal] = {
+    for {
+      needBets <- getBetsBySport(sport)
+      filteredBets = needBets.filter(bet => bet.status != "cancel")
+      amountOfOneBet = filteredBets.map(bet => bet.price)
+      amountOfAll = amountOfOneBet.sum
+    } yield amountOfAll
+  }
+
+  def totalAmountFromWinBets(sport: String): Future[BigDecimal] = {
+    for {
+      needBets <- getBetsBySport(sport)
+      lostBets = needBets.filter(bet => bet.status.equals("win"))
+      amountOfOneBet = lostBets.map(bet => bet.price * bet.coefficient)
+      amountOfAll = amountOfOneBet.sum
+    } yield amountOfAll
+  }
+
   def getBetsBySport(sport: String): Future[Seq[Bet]] = {
     val query =
       s"""SELECT b.* FROM `Bets` b WHERE b.sport='$sport'"""
 
     cluster.query(query).map(_.rowsAs(Bet.codec).getOrElse(Seq()).toSeq)
 
-  }
-
-  def totalAmountFromBets(sport: String): Future[BigDecimal] = {
-    for {
-      needBets <- getBetsBySport(sport)
-      amountOfOneBet =needBets.map(bet=>bet.price)
-      amountOfAll=amountOfOneBet.sum
-    }yield  amountOfAll
-  }
-  def totalAmountFromWinBets(sport:String): Future[BigDecimal] ={
-    for {
-      needBets<-getBetsBySport(sport)
-      lostBets=needBets.filter(bet=>bet.status.equals("win"))
-      amountOfOneBet=lostBets.map(bet=>bet.price*bet.coefficient-bet.price)
-      amountOfAll=amountOfOneBet.sum
-    }yield amountOfAll
-  }
-
-  def incomeFromBetsBySport(sport:String): Future[BigDecimal] ={
-    for {
-      amountFromBets<-totalAmountFromBets(sport)
-      amountFromWinBets<-totalAmountFromWinBets(sport)
-      income=amountFromBets-amountFromWinBets
-    }yield income
   }
 
   def getBetByUserId(id: String): Future[Seq[Bet]] = {
@@ -106,15 +108,15 @@ class BetBucket(cluster: AsyncCluster, eventService: EventService)(implicit ex: 
     } yield isActive
   }
 
-  override def entityToId(data: Bet): String = {
-    s"B:${data.id}"
-  }
-
   def updateBetToDB(selection: Selection): Future[Bet] = {
     for {
       betDB <- updateBet(selection)
       db <- defaultCollection.upsert(entityToId(betDB), betDB)(Bet.codec).map(_ => betDB)
     } yield db
+  }
+
+  override def entityToId(data: Bet): String = {
+    s"B:${data.id}"
   }
 
   def updateBet(selection: Selection): Future[Bet] = {

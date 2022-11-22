@@ -5,6 +5,7 @@ import entity.CompanyReport
 import scala.concurrent.Future
 
 trait ReportService {
-  def createReport(id:String, sport:String):Future[CompanyReport]
+  def createReport( sport:String):Future[CompanyReport]
+  def getAllReports:Future[Seq[CompanyReport]]
 
 }
