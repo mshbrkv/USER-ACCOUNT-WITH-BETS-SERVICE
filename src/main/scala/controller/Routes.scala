@@ -16,6 +16,7 @@ import scala.util.{Failure, Success}
 class Routes(userService: UserService, betService: BetService, reportService: ReportService)
             (implicit ex: ExecutionContext) extends FailFastCirceSupport {
 
+
   private val routesWithUserId: Route = pathPrefix("user") {
     pathPrefix("id" / Segment) { id => {
       get { //work
@@ -123,5 +124,4 @@ class Routes(userService: UserService, betService: BetService, reportService: Re
       }
   }
   val routes: Route = routesWithUserId ~ betRoutes ~ reportRoute
-
 }
