@@ -10,7 +10,7 @@ trait BetService {
 
   def getBetByUserId(id: String): Future[Seq[Bet]]
 
-  def getBetByEventId(eventId: String): Future[Seq[Bet]]
+  def getBetByEventId(eventId: String): Future[Seq[Bet]
 
   def createBet(data: Bet, userId: String): Future[Bet]
 
