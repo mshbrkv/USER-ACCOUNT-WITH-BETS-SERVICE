@@ -8,6 +8,7 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.syntax.EncoderOps
 import service.bet.BetService
 import service.report.ReportService
+
 import service.user.UserService
 
 import scala.concurrent.ExecutionContext
@@ -124,4 +125,5 @@ class Routes(userService: UserService, betService: BetService, reportService: Re
       }
   }
   val routes: Route = routesWithUserId ~ betRoutes ~ reportRoute
+
 }

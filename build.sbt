@@ -35,7 +35,6 @@ libraryDependencies ++= {
     "com.couchbase.client" % "scala-client" % "1.2.4",
     "com.lihaoyi" %% "requests" % "0.7.1",
     "org.mockito" %% "mockito-scala" % "1.17.12" % Test
-
   ).map(_.cross(CrossVersion.for3Use2_13))
 }
 
